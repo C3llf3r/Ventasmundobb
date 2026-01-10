@@ -1,14 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, FileText, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
 import Dashboard from './components/Dashboard';
 import EntryForm from './components/EntryForm';
 import SalesList from './components/SalesList';
 import PdfReportModal from './components/PdfReportModal';
 import SettingsModal from './components/SettingsModal';
+import Login from './components/Login';
 import { salesService } from './services/salesService';
 
 export default function App() {
-  // State
+  // Auth State
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // App Data State
   const [sales, setSales] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [ivaRecuperable, setIvaRecuperable] = useState(0);
@@ -36,12 +43,23 @@ export default function App() {
     };
   });
 
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Derived date values
   const month = currentDate.getMonth() + 1;
   const year = currentDate.getFullYear();
 
   // Load Data
   const loadData = useCallback(async () => {
+    if (!user) return; // Don't load if not logged in
+
     try {
       const salesData = await salesService.getSales(month, year);
       setSales(salesData);
@@ -50,17 +68,13 @@ export default function App() {
       setIvaRecuperable(ivaRec);
 
       const factFaltante = await salesService.getFacturaFaltante(month, year);
-      // If factFaltante is 0, we might want to keep the default or previous value,
-      // but usually 0 is a valid value for "no limit" or "0 limit". 
-      // However, if it's the first time, it might return 0. 
-      // Let's assume if it returns a value, we use it. If it returns undefined (which it shouldn't per service), we fallback.
       if (factFaltante !== undefined) {
           setMaxPaymentLimit(factFaltante || 500000); 
       }
     } catch (error) {
       console.error("Error loading data", error);
     }
-  }, [month, year]);
+  }, [month, year, user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -93,6 +107,14 @@ export default function App() {
     await salesService.setFacturaFaltante(month, year, val);
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+
   // Calculations for PDF Report
   const calculateDashboardData = () => {
     const safeSales = Array.isArray(sales) ? sales : [];
@@ -101,7 +123,7 @@ export default function App() {
     const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
     const totalSales = totalCash + totalCard + totalInvoice;
     
-    // Constants (could be moved to settings)
+    // Constants
     const taxRate = 0.19;
     const ppmRate = 0.02;
 
@@ -115,7 +137,6 @@ export default function App() {
     let finalIvaToPay = 0;
     let facturaFaltanteNeto = 0;
     
-    // Logic: if debt > limit, pay limit, rest is "missing invoice"
     if (realDebt > maxPaymentLimit) {
       finalIvaToPay = maxPaymentLimit;
       facturaFaltanteNeto = realDebt - maxPaymentLimit;
@@ -135,8 +156,26 @@ export default function App() {
     };
   };
 
-  const dashboardData = calculateDashboardData();
+  // ------------------------------------------------------------------
+  // Render Logic
+  // ------------------------------------------------------------------
 
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-medium">Cargando sistema...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Login />;
+  }
+
+  const dashboardData = calculateDashboardData();
   const monthName = currentDate.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
 
   return (
@@ -147,7 +186,10 @@ export default function App() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{appSettings.companyName}</h1>
-              <p className="text-sm text-gray-500">{appSettings.appTitle}</p>
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                 <User size={14} />
+                 <span>{user.email}</span>
+              </div>
             </div>
             
             <div className="flex items-center gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200">
@@ -177,6 +219,14 @@ export default function App() {
                 title="Configuración"
               >
                 <Settings size={24} />
+              </button>
+              <div className="w-px h-8 bg-gray-300 mx-1"></div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={24} />
               </button>
             </div>
           </div>
