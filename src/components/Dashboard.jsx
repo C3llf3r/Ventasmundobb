@@ -5,7 +5,7 @@ import MetricsSection from './MetricsSection';
 
 export default function Dashboard({
   sales,
-  previousYearSales, // Nueva prop
+  previousYearSales,
   taxRate = 0.19,
   ivaRecuperable = 0,
   onIvaRecChange,
@@ -18,42 +18,75 @@ export default function Dashboard({
 }) {
   const safeSales = Array.isArray(sales) ? sales : [];
   
-  // Default visibility if undefined (to prevent crash on first load)
+  // Default visibility
   const isVisible = (key) => visibleTotals ? visibleTotals[key] !== false : true;
 
+  // --- CÁLCULOS MENSUALES ---
   const totalCash = safeSales.reduce((acc, curr) => acc + (Number(curr.cash) || 0), 0);
   const totalCard = safeSales.reduce((acc, curr) => acc + (Number(curr.card) || 0), 0);
   const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
   const totalSales = totalCash + totalCard + totalInvoice;
 
-  // Calcular venta del mismo día del año anterior
-  // Usamos new Date() para obtener el día "hoy" real, no el del mes navegado
+  // --- CÁLCULOS IMPUESTOS ---
+  const netSales = Math.round(totalSales / (1 + taxRate));
+  const totalIvaCalculated = Math.round(netSales * taxRate);
+  const ppmRate = 0.02;
+  const totalPPM = Math.round(netSales * ppmRate);
+  const ivaPlusPPM = totalIvaCalculated + totalPPM;
+  
+  const realDebt = ivaPlusPPM - ivaRecuperable;
+  
+  let finalIvaToPay = 0;
+  let facturaFaltanteNeto = 0;
+
+  if (realDebt > maxPaymentLimit) {
+    finalIvaToPay = maxPaymentLimit;
+    facturaFaltanteNeto = realDebt - maxPaymentLimit;
+  } else {
+    finalIvaToPay = realDebt;
+    facturaFaltanteNeto = 0;
+  }
+
+  const totalRecuperable = ivaRecuperable + facturaFaltanteNeto;
+  const honorario = 30000;
+  const totalToPayPocket = (finalIvaToPay > 0 ? finalIvaToPay : 0) + honorario;
+
+  // --- LÓGICA COMPARATIVA DIARIA (Día de la semana equivalente) ---
   const today = new Date();
   const currentDay = today.getDate();
-  const isCurrentMonth = today.getMonth() + 1 === new Date(sales[0]?.date || Date.now()).getMonth() + 1; // Aproximación
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const currentDayName = dayNames[today.getDay()];
 
-  // Filtrar ventas del año pasado usando lógica de "Día Equivalente"
+  // 1. Calcular Venta de HOY (Filtrando por día exacto del mes actual)
+  const salesToday = safeSales.filter(sale => {
+    // La fecha viene YYYY-MM-DD. Tomamos el día.
+    const saleDay = parseInt(sale.date.split('-')[2]);
+    return saleDay === currentDay;
+  });
+  
+  const totalSalesToday = salesToday.reduce((acc, s) => 
+    acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
+  );
+
+  // 2. Buscar día equivalente año pasado
   const getEquivalentDateLastYear = (date) => {
     const currentYear = date.getFullYear();
     const lastYear = currentYear - 1;
     const month = date.getMonth();
-    const dayOfWeek = date.getDay(); // 0-6 (0=Dom, 6=Sab)
+    const dayOfWeek = date.getDay(); // 0-6
     
-    // 1. Calcular ocurrencia actual (¿Qué número de X-día es hoy?)
+    // Contar ocurrencia actual (ej: es el 2do sábado del mes)
     let occurrence = 0;
     for (let d = 1; d <= date.getDate(); d++) {
-      // Creamos fecha en mediodía local para evitar líos de zona horaria
-      const tempDate = new Date(currentYear, month, d, 12, 0, 0);
-      if (tempDate.getDay() === dayOfWeek) {
-        occurrence++;
-      }
+      const temp = new Date(currentYear, month, d);
+      if (temp.getDay() === dayOfWeek) occurrence++;
     }
 
-    // 2. Buscar esa misma ocurrencia en el año pasado
+    // Buscar la misma ocurrencia en el año pasado
     let count = 0;
     for (let d = 1; d <= 31; d++) {
-      const testDate = new Date(lastYear, month, d, 12, 0, 0);
-      if (testDate.getMonth() !== month) break;
+      const testDate = new Date(lastYear, month, d);
+      if (testDate.getMonth() !== month) break; // Nos salimos del mes
 
       if (testDate.getDay() === dayOfWeek) {
         count++;
@@ -62,19 +95,16 @@ export default function Dashboard({
         }
       }
     }
+    // Si no encontramos la ocurrencia exacta (ej: 5to sábado), devolvemos el último encontrado
     return null;
   };
 
   const targetDateLastYear = getEquivalentDateLastYear(today);
   
-  // Nombres de días para el label
-  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-  const currentDayName = dayNames[today.getDay()];
-
+  // Calcular venta del día equivalente
   const sameDaySalesPrevYear = (previousYearSales || []).filter(sale => {
     if (!targetDateLastYear) return false;
     
-    // Formato ISO local YYYY-MM-DD
     const y = targetDateLastYear.getFullYear();
     const m = String(targetDateLastYear.getMonth() + 1).padStart(2, '0');
     const d = String(targetDateLastYear.getDate()).padStart(2, '0');
@@ -91,91 +121,55 @@ export default function Dashboard({
     ? `Año Pasado (${dayNames[targetDateLastYear.getDay()]} ${targetDateLastYear.getDate()})` 
     : `Año Pasado (N/A)`;
 
-  // Calcular Venta de HOY (Mes actual)
-  const salesToday = safeSales.filter(sale => {
-    const day = parseInt(sale.date.split('-')[2]);
-    return day === currentDay;
-  });
-
-  const totalSalesToday = salesToday.reduce((acc, s) => 
-    acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
-  );
-
-  // Cálculos base
-  const netSales = Math.round(totalSales / (1 + taxRate));
-  
-  // Total Iva (Neto * 19%)
-  const totalIvaCalculated = Math.round(netSales * taxRate);
-
-  // Total PPM: Total Neto * 0,02
-  const ppmRate = 0.02;
-  const totalPPM = Math.round(netSales * ppmRate);
-
-  // Iva + PPM
-  const ivaPlusPPM = totalIvaCalculated + totalPPM;
-
-  // ---------------------------------------------------------
-  // LÓGICA DE TOPE Y FACTURA FALTANTE
-  // ---------------------------------------------------------
-  
-  const realDebt = ivaPlusPPM - ivaRecuperable;
-  const paymentLimit = maxPaymentLimit;
-  
-  let finalIvaToPay = 0;
-  let facturaFaltanteNeto = 0;
-
-  if (realDebt > paymentLimit) {
-    finalIvaToPay = paymentLimit;
-    facturaFaltanteNeto = realDebt - paymentLimit;
-  } else {
-    finalIvaToPay = realDebt;
-    facturaFaltanteNeto = 0;
-  }
-
-  const totalRecuperable = ivaRecuperable + facturaFaltanteNeto;
-  const honorario = 30000;
-  const totalToPayPocket = (finalIvaToPay > 0 ? finalIvaToPay : 0) + honorario;
-
   return (
-    <div className="mb-6">
-      {/* SECCIÓN PRINCIPAL: SIEMPRE VISIBLE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
-        <Card 
-          title={`Venta Hoy (Día ${currentDay})`} 
-          amount={totalSalesToday} 
-          icon={<DollarSign className="text-blue-600 dark:text-blue-400" />} 
-          color="border-l-4 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-        />
-        <Card 
-          title={labelLastYear} 
-          amount={totalSameDayPrevYear} 
-          icon={<Calendar className="text-amber-600 dark:text-amber-400" />} 
-          color="border-l-4 border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-        >
-           {/* DEBUG INFO - BORRAR LUEGO */}
-           <div className="text-[10px] text-gray-400 mt-1">
-             Meta: {targetDateLastYear ? `${targetDateLastYear.getFullYear()}-${String(targetDateLastYear.getMonth()+1).padStart(2,'0')}-${String(targetDateLastYear.getDate()).padStart(2,'0')}` : 'N/A'} 
-             ({sameDaySalesPrevYear.length} regs)
-           </div>
-        </Card>
-        <Card 
-          title="Efectivo (Mes)" 
-          amount={totalCash} 
-          icon={<Wallet className="text-green-500" />} 
-          color="border-l-4 border-green-500"
-        />
-        <Card 
-          title="Tarjeta (Mes)" 
-          amount={totalCard} 
-          icon={<CreditCard className="text-purple-500" />} 
-          color="border-l-4 border-purple-500"
-        />
-        <Card 
-          title="Venta Total (Mes)" 
-          amount={totalSales} 
-          icon={<TrendingUp className="text-indigo-500" />} 
-          color="border-l-4 border-indigo-500"
-        />
+    <div className="mb-6 space-y-6">
+      
+      {/* GRUPO 1: COMPARATIVA DIARIA */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+          <Calendar size={16} /> Resumen Diario ({currentDayName} {currentDay})
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+          <Card 
+            title="Venta Hoy" 
+            amount={totalSalesToday} 
+            icon={<DollarSign className="text-blue-600 dark:text-blue-400" />} 
+            color="border-l-4 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+          />
+          <Card 
+            title={labelLastYear} 
+            amount={totalSameDayPrevYear} 
+            icon={<Calendar className="text-amber-600 dark:text-amber-400" />} 
+            color="border-l-4 border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+          />
+        </div>
+      </div>
+
+      {/* GRUPO 2: TOTALES DEL MES */}
+      <div>
+        <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+          <TrendingUp size={16} /> Totales del Mes
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card 
+            title="Efectivo" 
+            amount={totalCash} 
+            icon={<Wallet className="text-green-500" />} 
+            color="border-l-4 border-green-500"
+          />
+          <Card 
+            title="Tarjeta" 
+            amount={totalCard} 
+            icon={<CreditCard className="text-purple-500" />} 
+            color="border-l-4 border-purple-500"
+          />
+          <Card 
+            title="Venta Total" 
+            amount={totalSales} 
+            icon={<TrendingUp className="text-indigo-500" />} 
+            color="border-l-4 border-indigo-500"
+          />
+        </div>
       </div>
 
       {/* SECCIÓN MÉTRICAS: OCULTA POR DEFECTO */}
@@ -188,7 +182,6 @@ export default function Dashboard({
        {/* SECCIÓN DETALLES: OCULTA POR DEFECTO */}
        {showDetails && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-
            {isVisible('netSales') && (
              <Card
                title="Total Neto"
@@ -222,7 +215,7 @@ export default function Dashboard({
              />
            )}
 
-           {/* Tarjeta Manual: Iva Recuperable con separador de miles - Siempre visible */}
+           {/* Tarjeta Manual: Iva Recuperable */}
            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-cyan-500 transition-colors duration-300">
              <div className="flex justify-between items-start mb-2">
                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Iva Recuperable</p>
@@ -243,7 +236,7 @@ export default function Dashboard({
              </div>
            </div>
 
-           {/* Tarjeta Automática: Factura Faltante - Siempre visible */}
+           {/* Tarjeta Automática: Factura Faltante */}
            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-red-600 transition-colors duration-300">
              <div className="flex justify-between items-start">
                <div className="w-full">
