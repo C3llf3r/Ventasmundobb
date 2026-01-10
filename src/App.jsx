@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User, Moon, Sun, ChevronUp, ChevronDown, PieChart, PlusCircle } from 'lucide-react';
+import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User, Moon, Sun, ChevronUp, ChevronDown, PieChart, PlusCircle, List } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import Dashboard from './components/Dashboard';
@@ -29,6 +29,7 @@ export default function App() {
   const [showEntryForm, setShowEntryForm] = useState(true);
   const [showDetails, setShowDetails] = useState(false); // Estado para Impuestos
   const [showMetrics, setShowMetrics] = useState(false); // Estado para Gráficos
+  const [showHistory, setShowHistory] = useState(true); // Estado para Historial (visible por defecto)
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
@@ -363,6 +364,22 @@ export default function App() {
               </>
             )}
           </button>
+
+          {/* BOTÓN HISTORIAL */}
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+          >
+            {showHistory ? (
+              <>
+                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Historial
+              </>
+            ) : (
+              <>
+                <List className="w-5 h-5 mr-2" /> Ver Historial
+              </>
+            )}
+          </button>
         </div>
 
         {showEntryForm && (
@@ -371,11 +388,15 @@ export default function App() {
           </div>
         )}
         
-        <SalesList 
-          sales={sales} 
-          onSalesUpdated={loadData} 
-          userRole={userProfile?.role}
-        />
+        {showHistory && (
+          <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+            <SalesList 
+              sales={sales} 
+              onSalesUpdated={loadData} 
+              userRole={userProfile?.role}
+            />
+          </div>
+        )}
       </main>
 
       {/* Modals */}
