@@ -138,7 +138,9 @@ export default function Dashboard({
              <div className="flex items-center bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 focus-within:ring-2 focus-within:ring-cyan-500 transition-colors">
                <span className="text-cyan-700 dark:text-cyan-400 font-bold">$</span>
                <input
-                 type="text"
+                 type="tel"
+                 inputMode="numeric"
+                 pattern="[0-9]*"
                  placeholder="0"
                  value={formatNumberWithDots(ivaRecuperable)}
                  onChange={(e) => onIvaRecChange(parseNumberFromDots(e.target.value))}
@@ -155,7 +157,9 @@ export default function Dashboard({
                  <div className="flex items-center gap-1 mb-1 text-xs text-gray-400">
                    <span>Meta pagar:</span>
                    <input
-                     type="text"
+                     type="tel"
+                     inputMode="numeric"
+                     pattern="[0-9]*"
                      value={formatNumberWithDots(maxPaymentLimit)}
                      onChange={(e) => onMaxPaymentLimitChange(parseNumberFromDots(e.target.value))}
                      className="w-24 bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded px-1 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-red-300"
