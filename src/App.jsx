@@ -266,13 +266,18 @@ export default function App() {
               >
                 <FileText size={24} />
               </button>
-              <button 
-                onClick={() => setIsSettingsOpen(true)}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title="Configuración"
-              >
-                <Settings size={24} />
-              </button>
+              
+              {/* Configuración solo para Admins */}
+              {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+                <button 
+                  onClick={() => setIsSettingsOpen(true)}
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Configuración"
+                >
+                  <Settings size={24} />
+                </button>
+              )}
+
               <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-1"></div>
               <button
                 onClick={handleLogout}
@@ -298,6 +303,7 @@ export default function App() {
           visibleTotals={appSettings.visibleTotals}
           showDetails={showDetails}
           showMetrics={showMetrics}
+          userRole={userProfile?.role}
         />
         
         {/* BOTONES DE CONTROL (FILA UNIFICADA) */}
@@ -318,21 +324,23 @@ export default function App() {
             )}
           </button>
 
-          {/* BOTÓN IMPUESTOS */}
-          <button 
-            onClick={() => setShowDetails(!showDetails)}
-            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
-          >
-            {showDetails ? (
-              <>
-                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Detalles
-              </>
-            ) : (
-              <>
-                <ChevronDown className="w-5 h-5 mr-2" /> Ver Impuestos
-              </>
-            )}
-          </button>
+          {/* BOTÓN IMPUESTOS - Solo Admin/SuperAdmin */}
+          {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
+            <button 
+              onClick={() => setShowDetails(!showDetails)}
+              className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+            >
+              {showDetails ? (
+                <>
+                  <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Detalles
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-5 h-5 mr-2" /> Ver Impuestos
+                </>
+              )}
+            </button>
+          )}
 
           {/* BOTÓN GRÁFICOS */}
           <button 
