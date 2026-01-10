@@ -380,6 +380,7 @@ export default function App() {
         year={year}
         dashboardData={dashboardData}
         sales={sales}
+        companySettings={appSettings}
       />
     </div>
   );
