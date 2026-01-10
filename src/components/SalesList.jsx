@@ -107,9 +107,8 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <input
-                            type="tel"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
+                            type="number"
+                            inputMode="decimal"
                             name="cash"
                             value={formatNumberWithDots(editForm.cash)}
                             onChange={handleChange}
@@ -118,9 +117,8 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <input
-                            type="tel"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
+                            type="number"
+                            inputMode="decimal"
                             name="card"
                             value={formatNumberWithDots(editForm.card)}
                             onChange={handleChange}
@@ -129,9 +127,8 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <input
-                            type="tel"
-                            inputMode="numeric"
-                            pattern="[0-9]*"
+                            type="number"
+                            inputMode="decimal"
                             name="invoice"
                             value={formatNumberWithDots(editForm.invoice)}
                             onChange={handleChange}

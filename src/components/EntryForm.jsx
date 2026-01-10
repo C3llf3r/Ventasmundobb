@@ -59,9 +59,8 @@ export default function EntryForm({ onSaleAdded }) {
           <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md px-2 focus-within:ring-2 focus-within:ring-green-500 bg-white dark:bg-gray-700 transition-colors">
             <span className="text-gray-400">$</span>
             <input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              type="number"
+              inputMode="decimal"
               placeholder="0"
               value={formatNumberWithDots(cash)}
               onChange={handleInputChange(setCash)}
@@ -74,9 +73,8 @@ export default function EntryForm({ onSaleAdded }) {
           <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md px-2 focus-within:ring-2 focus-within:ring-purple-500 bg-white dark:bg-gray-700 transition-colors">
             <span className="text-gray-400">$</span>
             <input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              type="number"
+              inputMode="decimal"
               placeholder="0"
               value={formatNumberWithDots(card)}
               onChange={handleInputChange(setCard)}
@@ -89,9 +87,8 @@ export default function EntryForm({ onSaleAdded }) {
           <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-md px-2 focus-within:ring-2 focus-within:ring-orange-500 bg-white dark:bg-gray-700 transition-colors">
             <span className="text-gray-400">$</span>
             <input
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
+              type="number"
+              inputMode="decimal"
               placeholder="0"
               value={formatNumberWithDots(invoice)}
               onChange={handleInputChange(setInvoice)}
