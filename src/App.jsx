@@ -25,38 +25,38 @@ export default function App() {
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [showEntryForm, setShowEntryForm] = useState(true); // Estado para colapsar formulario
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
+    // Intentar leer de localStorage, si no, preferencia del sistema
     const saved = localStorage.getItem('theme');
-    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    return saved === 'dark';
   });
 
-  // App Settings (Local Storage)
-  const [appSettings, setAppSettings] = useState(() => {
-    const saved = localStorage.getItem('appSettings');
-    return saved ? JSON.parse(saved) : {
-      companyName: 'Mi Empresa',
-      appTitle: 'Sistema de Ventas',
-      visibleTotals: {
-        netSales: true,
-        totalIva: true,
-        totalPPM: true,
-        ivaPlusPPM: true,
-        totalRecuperable: true,
-        finalIvaToPay: true,
-        totalToPayPocket: true
-      }
-    };
+  // App Settings (Global State)
+  const [appSettings, setAppSettings] = useState({
+    companyName: 'Mi Empresa',
+    appTitle: 'Sistema de Ventas',
+    visibleTotals: {
+      netSales: true,
+      totalIva: true,
+      totalPPM: true,
+      ivaPlusPPM: true,
+      totalRecuperable: true,
+      finalIvaToPay: true,
+      totalToPayPocket: true
+    }
   });
 
-  // Theme Effect
+  // Theme Effect - Asegura que la clase se aplique correctamente
   useEffect(() => {
+    const root = window.document.documentElement;
     if (darkMode) {
-      document.documentElement.classList.add('dark');
+      root.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     } else {
-      document.documentElement.classList.remove('dark');
+      root.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
   }, [darkMode]);
@@ -70,6 +70,12 @@ export default function App() {
         const profile = await salesService.getUserProfile(currentUser.uid);
         setUserProfile(profile);
         setUser(currentUser);
+        
+        // Cargar configuración global de la empresa
+        const globalSettings = await salesService.getGlobalSettings();
+        if (globalSettings) {
+          setAppSettings(globalSettings);
+        }
       } else {
         setUser(null);
         setUserProfile(null);
@@ -123,9 +129,10 @@ export default function App() {
     setDarkMode(!darkMode);
   };
 
-  const handleSaveSettings = (newSettings) => {
+  const handleSaveSettings = async (newSettings) => {
     setAppSettings(newSettings);
-    localStorage.setItem('appSettings', JSON.stringify(newSettings));
+    // Guardar en Firestore para que sea global
+    await salesService.saveGlobalSettings(newSettings);
   };
 
   const handleIvaRecuperableChange = async (val) => {
@@ -286,9 +293,27 @@ export default function App() {
           onIvaRecChange={handleIvaRecuperableChange}
           maxPaymentLimit={maxPaymentLimit}
           onMaxPaymentLimitChange={handleMaxPaymentLimitChange}
+          visibleTotals={appSettings.visibleTotals} // Pasamos la config de visibilidad
         />
         
-        <EntryForm onSaleAdded={loadData} />
+        <div className="mb-4 flex justify-end">
+           <button
+             onClick={() => setShowEntryForm(!showEntryForm)}
+             className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+           >
+             {showEntryForm ? (
+               <>Ocultar Ingreso <ChevronLeft className="rotate-90 w-4 h-4" /></>
+             ) : (
+               <>Mostrar Ingreso <ChevronRight className="rotate-90 w-4 h-4" /></>
+             )}
+           </button>
+        </div>
+
+        {showEntryForm && (
+          <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+            <EntryForm onSaleAdded={loadData} />
+          </div>
+        )}
         
         <SalesList 
           sales={sales} 

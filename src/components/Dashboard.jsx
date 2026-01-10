@@ -9,13 +9,17 @@ export default function Dashboard({
   ivaRecuperable = 0,
   onIvaRecChange,
   maxPaymentLimit = 500000,
-  onMaxPaymentLimitChange
+  onMaxPaymentLimitChange,
+  visibleTotals // Nueva prop
 }) {
   const [showDetails, setShowDetails] = useState(false);
   const [showMetrics, setShowMetrics] = useState(false);
 
   const safeSales = Array.isArray(sales) ? sales : [];
   
+  // Default visibility if undefined (to prevent crash on first load)
+  const isVisible = (key) => visibleTotals ? visibleTotals[key] !== false : true;
+
   const totalCash = safeSales.reduce((acc, curr) => acc + (Number(curr.cash) || 0), 0);
   const totalCard = safeSales.reduce((acc, curr) => acc + (Number(curr.card) || 0), 0);
   const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
@@ -125,30 +129,38 @@ export default function Dashboard({
        {showDetails && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
 
-           <Card
-             title="Total Neto"
-             amount={netSales}
-             icon={<BarChart3 className="text-indigo-500" />}
-             color="border-l-4 border-indigo-500"
-           />
-           <Card
-             title="Total Iva"
-             amount={totalIvaCalculated}
-             icon={<Calculator className="text-orange-500" />}
-             color="border-l-4 border-orange-500"
-           />
-           <Card
-             title={`Total PPM (${ppmRate * 100}%)`}
-             amount={totalPPM}
-             icon={<Percent className="text-yellow-600" />}
-             color="border-l-4 border-yellow-600"
-           />
-           <Card
-             title="Iva + PPM"
-             amount={ivaPlusPPM}
-             icon={<Coins className="text-emerald-500" />}
-             color="border-l-4 border-emerald-500"
-           />
+           {isVisible('netSales') && (
+             <Card
+               title="Total Neto"
+               amount={netSales}
+               icon={<BarChart3 className="text-indigo-500" />}
+               color="border-l-4 border-indigo-500"
+             />
+           )}
+           {isVisible('totalIva') && (
+             <Card
+               title="Total Iva"
+               amount={totalIvaCalculated}
+               icon={<Calculator className="text-orange-500" />}
+               color="border-l-4 border-orange-500"
+             />
+           )}
+           {isVisible('totalPPM') && (
+             <Card
+               title={`Total PPM (${ppmRate * 100}%)`}
+               amount={totalPPM}
+               icon={<Percent className="text-yellow-600" />}
+               color="border-l-4 border-yellow-600"
+             />
+           )}
+           {isVisible('ivaPlusPPM') && (
+             <Card
+               title="Iva + PPM"
+               amount={ivaPlusPPM}
+               icon={<Coins className="text-emerald-500" />}
+               color="border-l-4 border-emerald-500"
+             />
+           )}
 
            {/* Tarjeta Manual: Iva Recuperable con separador de miles - Siempre visible */}
            <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-cyan-500 transition-colors duration-300">
@@ -194,28 +206,34 @@ export default function Dashboard({
              </div>
            </div>
 
-           <Card
-             title="Total Recuperable"
-             amount={totalRecuperable}
-             icon={<PiggyBank className="text-teal-600 dark:text-teal-400" />}
-             color="border-l-4 border-teal-600"
-           />
+           {isVisible('totalRecuperable') && (
+             <Card
+               title="Total Recuperable"
+               amount={totalRecuperable}
+               icon={<PiggyBank className="text-teal-600 dark:text-teal-400" />}
+               color="border-l-4 border-teal-600"
+             />
+           )}
 
-           <Card
-             title="IVA a Pagar"
-             amount={finalIvaToPay}
-             icon={<DollarSign className="text-red-500 dark:text-red-400" />}
-             color="border-l-4 border-red-500"
-             isTax
-           />
+           {isVisible('finalIvaToPay') && (
+             <Card
+               title="IVA a Pagar"
+               amount={finalIvaToPay}
+               icon={<DollarSign className="text-red-500 dark:text-red-400" />}
+               color="border-l-4 border-red-500"
+               isTax
+             />
+           )}
 
-           <Card
-             title="TOTAL A PAGAR (c/Honorario)"
-             amount={totalToPayPocket}
-             icon={<Briefcase className="text-rose-600 dark:text-rose-400" />}
-             color="border-l-4 border-rose-600"
-             isTax
-           />
+           {isVisible('totalToPayPocket') && (
+             <Card
+               title="TOTAL A PAGAR (c/Honorario)"
+               amount={totalToPayPocket}
+               icon={<Briefcase className="text-rose-600 dark:text-rose-400" />}
+               color="border-l-4 border-rose-600"
+               isTax
+             />
+           )}
          </div>
        )}
     </div>

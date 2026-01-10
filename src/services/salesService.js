@@ -55,6 +55,31 @@ export const salesService = {
     }
   },
 
+  // --- Configuración Global (Empresa y Visibilidad) ---
+  getGlobalSettings: async () => {
+    try {
+      const docRef = doc(db, SETTINGS_COLLECTION, 'global_config');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null; // Si no existe, usaremos valores por defecto en App.jsx
+    } catch (error) {
+      console.error("Error getting global settings:", error);
+      return null;
+    }
+  },
+
+  saveGlobalSettings: async (settings) => {
+    try {
+      const docRef = doc(db, SETTINGS_COLLECTION, 'global_config');
+      await setDoc(docRef, settings, { merge: true });
+    } catch (error) {
+      console.error("Error saving global settings:", error);
+      throw error;
+    }
+  },
+
   // --- Ventas ---
   addSale: async (date, cash, card, invoice) => {
     try {
