@@ -4,35 +4,35 @@ import autoTable from 'jspdf-autotable';
 import { FileDown, X, CheckSquare, Square } from 'lucide-react';
 import { formatCLP } from '../lib/utils';
 
-export default function PdfReportModal({ 
-  isOpen, 
-  onClose, 
-  month, 
-  year, 
-  dashboardData,
-  sales 
-}) {
-  if (!isOpen) return null;
+export default function PdfReportModal({
+   isOpen,
+   onClose,
+   month,
+   year,
+   dashboardData,
+   sales
+ }) {
+   // Opciones disponibles para el reporte (basadas en el Dashboard)
+   const options = [
+     { id: 'ventaTotal', label: 'Venta Total', value: dashboardData.totalSales },
+     { id: 'totalNeto', label: 'Total Neto', value: dashboardData.netSales },
+     { id: 'totalIva', label: 'Total IVA', value: dashboardData.totalIvaCalculated },
+     { id: 'totalPPM', label: 'Total PPM', value: dashboardData.totalPPM },
+     { id: 'ivaPlusPPM', label: 'IVA + PPM', value: dashboardData.ivaPlusPPM },
+     { id: 'ivaRecuperable', label: 'IVA Recuperable', value: dashboardData.ivaRecuperable },
+     { id: 'facturaFaltante', label: 'Factura Faltante', value: dashboardData.facturaFaltanteNeto },
+     { id: 'totalRecuperable', label: 'Total Recuperable', value: dashboardData.totalRecuperable },
+     { id: 'efectivo', label: 'Efectivo', value: dashboardData.totalCash },
+     { id: 'tarjeta', label: 'Tarjeta', value: dashboardData.totalCard },
+     { id: 'ivaPagar', label: 'IVA a Pagar', value: dashboardData.finalIvaToPay },
+     { id: 'totalPagar', label: 'Total a Pagar', value: dashboardData.totalToPayPocket },
+   ];
 
-  // Opciones disponibles para el reporte (basadas en el Dashboard)
-  const options = [
-    { id: 'ventaTotal', label: 'Venta Total', value: dashboardData.totalSales },
-    { id: 'totalNeto', label: 'Total Neto', value: dashboardData.netSales },
-    { id: 'totalIva', label: 'Total IVA', value: dashboardData.totalIvaCalculated },
-    { id: 'totalPPM', label: 'Total PPM', value: dashboardData.totalPPM },
-    { id: 'ivaPlusPPM', label: 'IVA + PPM', value: dashboardData.ivaPlusPPM },
-    { id: 'ivaRecuperable', label: 'IVA Recuperable', value: dashboardData.ivaRecuperable },
-    { id: 'facturaFaltante', label: 'Factura Faltante', value: dashboardData.facturaFaltanteNeto },
-    { id: 'totalRecuperable', label: 'Total Recuperable', value: dashboardData.totalRecuperable },
-    { id: 'efectivo', label: 'Efectivo', value: dashboardData.totalCash },
-    { id: 'tarjeta', label: 'Tarjeta', value: dashboardData.totalCard },
-    { id: 'ivaPagar', label: 'IVA a Pagar', value: dashboardData.finalIvaToPay },
-    { id: 'totalPagar', label: 'Total a Pagar', value: dashboardData.totalToPayPocket },
-  ];
+   const [selectedOptions, setSelectedOptions] = useState(
+     options.map(o => o.id) // Por defecto todas seleccionadas
+   );
 
-  const [selectedOptions, setSelectedOptions] = useState(
-    options.map(o => o.id) // Por defecto todas seleccionadas
-  );
+   if (!isOpen) return null;
 
   const toggleOption = (id) => {
     setSelectedOptions(prev => 

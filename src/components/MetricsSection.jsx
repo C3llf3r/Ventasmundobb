@@ -2,6 +2,22 @@ import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { formatCLP } from '../lib/utils';
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
+        <p className="font-bold text-gray-700 dark:text-gray-200 mb-2">{label}</p>
+        {payload.map((entry, index) => (
+          <p key={index} style={{ color: entry.color }} className="text-sm">
+            {entry.name}: {formatCLP(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function MetricsSection({ sales }) {
   // Preparar datos para el gráfico de barras (Diario)
   // Agrupar ventas por día y ordenarlas
@@ -31,22 +47,6 @@ export default function MetricsSection({ sales }) {
     { name: 'Tarjeta', value: totalCard, color: '#a855f7' }, // purple-500
     { name: 'Factura', value: totalInvoice, color: '#f97316' }, // orange-500
   ].filter(item => item.value > 0);
-
-  const CustomTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded shadow-lg">
-          <p className="font-bold text-gray-700 dark:text-gray-200 mb-2">{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.color }} className="text-sm">
-              {entry.name}: {formatCLP(entry.value)}
-            </p>
-          ))}
-        </div>
-      );
-    }
-    return null;
-  };
 
   if (sales.length === 0) {
     return (

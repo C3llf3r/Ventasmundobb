@@ -1,74 +1,122 @@
-// Temporary implementation using LocalStorage until Firebase is ready
-// Data structure: { id: string, date: string (YYYY-MM-DD), cash: number, card: number, timestamp: number }
+import { db } from '../lib/firebase';
+import {
+   collection,
+   addDoc,
+   getDocs,
+   query,
+   doc,
+   updateDoc,
+   setDoc,
+   getDoc,
+   orderBy
+ } from 'firebase/firestore';
 
-const STORAGE_KEY = 'ventas_app_data';
-
-const generateId = () => Math.random().toString(36).substr(2, 9);
+const SALES_COLLECTION = 'sales';
+const SETTINGS_COLLECTION = 'monthly_settings';
 
 export const salesService = {
+  // Agregar una venta
   addSale: async (date, cash, card, invoice) => {
-    const sales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const newSale = {
-      id: generateId(),
-      date,
-      cash: Number(cash),
-      card: Number(card),
-      invoice: Number(invoice),
-      createdAt: Date.now(),
-    };
-    sales.push(newSale);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
-    return newSale;
+    try {
+      const docRef = await addDoc(collection(db, SALES_COLLECTION), {
+        date,
+        cash: Number(cash),
+        card: Number(card),
+        invoice: Number(invoice),
+        createdAt: new Date().getTime()
+      });
+      return { id: docRef.id };
+    } catch (error) {
+      console.error("Error adding document: ", error);
+      throw error;
+    }
   },
 
+  // Obtener ventas del mes/año
   getSales: async (month, year) => {
-    // Month is 0-indexed in JS Date, but let's expect 1-12 or handle "YYYY-MM"
-    const sales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    return sales.filter(sale => {
-      const saleDate = new Date(sale.date);
-      // Handle timezone offset issues by just checking substring if string is YYYY-MM-DD
-      const [y, m] = sale.date.split('-');
-      return parseInt(y) === year && parseInt(m) === month;
-    }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Newest first
+    try {
+      // Usaremos un filtro simple por fecha (string YYYY-MM-DD)
+      // Buscamos todas las ventas que empiecen con YYYY-MM
+      const prefix = `${year}-${String(month).padStart(2, '0')}`;
+      const q = query(
+        collection(db, SALES_COLLECTION),
+        orderBy("date", "desc")
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const allSales = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.date.startsWith(prefix)) {
+          allSales.push({ id: doc.id, ...data });
+        }
+      });
+      return allSales;
+    } catch (error) {
+      console.error("Error getting documents: ", error);
+      return [];
+    }
   },
 
-  getAllSales: async () => {
-      const sales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      return sales.sort((a, b) => new Date(b.date) - new Date(a.date));
-  },
-
-  deleteSale: async (id) => {
-    const sales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    const newSales = sales.filter(s => s.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newSales));
-  },
-  
+  // Actualizar una venta
   updateSale: async (id, updatedData) => {
-      const sales = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      const index = sales.findIndex(s => s.id === id);
-      if (index !== -1) {
-          sales[index] = { ...sales[index], ...updatedData };
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(sales));
-      }
+    try {
+      const docRef = doc(db, SALES_COLLECTION, id);
+      await updateDoc(docRef, {
+        ...updatedData,
+        updatedAt: new Date().getTime()
+      });
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      throw error;
+    }
   },
 
+  // Manejo de IVA Recuperable y Factura Faltante Manual por mes
+  getMonthlySettings: async (month, year) => {
+    try {
+      const docId = `settings_${year}_${month}`;
+      const docRef = doc(db, SETTINGS_COLLECTION, docId);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return docSnap.data();
+      } else {
+        return { ivaRecuperable: 0, facturaFaltante: 0 };
+      }
+    } catch (error) {
+      console.error("Error getting settings: ", error);
+      return { ivaRecuperable: 0, facturaFaltante: 0 };
+    }
+  },
+
+  setMonthlySetting: async (month, year, field, amount) => {
+    try {
+      const docId = `settings_${year}_${month}`;
+      const docRef = doc(db, SETTINGS_COLLECTION, docId);
+      await setDoc(docRef, { [field]: amount }, { merge: true });
+    } catch (error) {
+      console.error("Error setting monthly setting: ", error);
+      throw error;
+    }
+  },
+
+  // Mapeadores específicos para compatibilidad con el código anterior
   getIvaRecuperable: async (month, year) => {
-    const key = `iva_rec_v2_${year}_${month}`;
-    return Number(localStorage.getItem(key) || 0);
+    const settings = await salesService.getMonthlySettings(month, year);
+    return settings.ivaRecuperable || 0;
   },
 
   setIvaRecuperable: async (month, year, amount) => {
-    const key = `iva_rec_v2_${year}_${month}`;
-    localStorage.setItem(key, amount.toString());
+    await salesService.setMonthlySetting(month, year, 'ivaRecuperable', amount);
   },
 
   getFacturaFaltante: async (month, year) => {
-    const key = `fact_falt_${year}_${month}`;
-    return Number(localStorage.getItem(key) || 0);
+    const settings = await salesService.getMonthlySettings(month, year);
+    return settings.facturaFaltante || 0;
   },
 
   setFacturaFaltante: async (month, year, amount) => {
-    const key = `fact_falt_${year}_${month}`;
-    localStorage.setItem(key, amount.toString());
+    await salesService.setMonthlySetting(month, year, 'facturaFaltante', amount);
   }
 };

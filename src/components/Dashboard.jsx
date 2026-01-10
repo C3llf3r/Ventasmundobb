@@ -3,10 +3,10 @@ import { DollarSign, CreditCard, Wallet, TrendingUp, BarChart3, Calculator, Perc
 import { formatCLP, formatNumberWithDots, parseNumberFromDots } from '../lib/utils';
 import MetricsSection from './MetricsSection';
 
-export default function Dashboard({ 
-  sales, 
-  taxRate = 0.19, 
-  ivaRecuperable = 0, 
+export default function Dashboard({
+  sales,
+  taxRate = 0.19,
+  ivaRecuperable = 0,
   onIvaRecChange,
   maxPaymentLimit = 500000,
   onMaxPaymentLimitChange
@@ -121,103 +121,103 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* SECCIÓN DETALLES: OCULTA POR DEFECTO */}
-      {showDetails && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
-          
-          <Card 
-            title="Total Neto" 
-            amount={netSales} 
-            icon={<BarChart3 className="text-indigo-500" />} 
-            color="border-l-4 border-indigo-500"
-          />
-          <Card 
-            title="Total Iva" 
-            amount={totalIvaCalculated} 
-            icon={<Calculator className="text-orange-500" />} 
-            color="border-l-4 border-orange-500"
-          />
-          <Card 
-            title={`Total PPM (${ppmRate * 100}%)`} 
-            amount={totalPPM} 
-            icon={<Percent className="text-yellow-600" />} 
-            color="border-l-4 border-yellow-600"
-          />
-          <Card 
-            title="Iva + PPM" 
-            amount={ivaPlusPPM} 
-            icon={<Coins className="text-emerald-500" />} 
-            color="border-l-4 border-emerald-500"
-          />
-          
-          {/* Tarjeta Manual: Iva Recuperable con separador de miles */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-cyan-500">
-            <div className="flex justify-between items-start mb-2">
-              <p className="text-sm text-gray-500 font-medium">Iva Recuperable</p>
-              <div className="p-2 bg-gray-50 rounded-full">
-                <Receipt className="text-cyan-500 w-5 h-5" />
-              </div>
-            </div>
-            <div className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 focus-within:ring-2 focus-within:ring-cyan-500">
-              <span className="text-cyan-700 font-bold">$</span>
-              <input
-                type="text"
-                placeholder="0"
-                value={formatNumberWithDots(ivaRecuperable)}
-                onChange={(e) => onIvaRecChange(parseNumberFromDots(e.target.value))}
-                className="w-full text-xl font-bold bg-transparent p-1 outline-none text-cyan-700 ml-1"
-              />
-            </div>
-          </div>
+       {/* SECCIÓN DETALLES: OCULTA POR DEFECTO */}
+       {showDetails && (
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
 
-          {/* Tarjeta Automática: Factura Faltante */}
-          <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-600">
-            <div className="flex justify-between items-start">
-              <div className="w-full">
-                <p className="text-xs text-red-600 font-bold uppercase tracking-wider">Factura Faltante</p>
-                <div className="flex items-center gap-1 mb-1 text-xs text-gray-400">
-                  <span>Meta pagar:</span>
-                  <input 
-                    type="text"
-                    value={formatNumberWithDots(maxPaymentLimit)}
-                    onChange={(e) => onMaxPaymentLimitChange(parseNumberFromDots(e.target.value))}
-                    className="w-24 bg-gray-100 border rounded px-1 text-gray-600 focus:outline-none focus:ring-1 focus:ring-red-300"
-                  />
-                </div>
-                <h3 className="text-2xl font-bold text-red-600">
-                  {formatCLP(facturaFaltanteNeto)}
-                </h3>
-              </div>
-              <div className="p-2 bg-red-50 rounded-full shrink-0 ml-2">
-                <FileWarning className="text-red-600 w-5 h-5" />
-              </div>
-            </div>
-          </div>
+           <Card
+             title="Total Neto"
+             amount={netSales}
+             icon={<BarChart3 className="text-indigo-500" />}
+             color="border-l-4 border-indigo-500"
+           />
+           <Card
+             title="Total Iva"
+             amount={totalIvaCalculated}
+             icon={<Calculator className="text-orange-500" />}
+             color="border-l-4 border-orange-500"
+           />
+           <Card
+             title={`Total PPM (${ppmRate * 100}%)`}
+             amount={totalPPM}
+             icon={<Percent className="text-yellow-600" />}
+             color="border-l-4 border-yellow-600"
+           />
+           <Card
+             title="Iva + PPM"
+             amount={ivaPlusPPM}
+             icon={<Coins className="text-emerald-500" />}
+             color="border-l-4 border-emerald-500"
+           />
 
-          <Card 
-            title="Total Recuperable" 
-            amount={totalRecuperable} 
-            icon={<PiggyBank className="text-teal-600" />} 
-            color="border-l-4 border-teal-600"
-          />
-          
-          <Card 
-            title="IVA a Pagar" 
-            amount={finalIvaToPay} 
-            icon={<DollarSign className="text-red-500" />} 
-            color="border-l-4 border-red-500"
-            isTax
-          />
+           {/* Tarjeta Manual: Iva Recuperable con separador de miles - Siempre visible */}
+           <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-cyan-500">
+             <div className="flex justify-between items-start mb-2">
+               <p className="text-sm text-gray-500 font-medium">Iva Recuperable</p>
+               <div className="p-2 bg-gray-50 rounded-full">
+                 <Receipt className="text-cyan-500 w-5 h-5" />
+               </div>
+             </div>
+             <div className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 focus-within:ring-2 focus-within:ring-cyan-500">
+               <span className="text-cyan-700 font-bold">$</span>
+               <input
+                 type="text"
+                 placeholder="0"
+                 value={formatNumberWithDots(ivaRecuperable)}
+                 onChange={(e) => onIvaRecChange(parseNumberFromDots(e.target.value))}
+                 className="w-full text-xl font-bold bg-transparent p-1 outline-none text-cyan-700 ml-1"
+               />
+             </div>
+           </div>
 
-          <Card 
-            title="TOTAL A PAGAR (c/Honorario)" 
-            amount={totalToPayPocket} 
-            icon={<Briefcase className="text-rose-600" />} 
-            color="border-l-4 border-rose-600"
-            isTax
-          />
-        </div>
-      )}
+           {/* Tarjeta Automática: Factura Faltante - Siempre visible */}
+           <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-600">
+             <div className="flex justify-between items-start">
+               <div className="w-full">
+                 <p className="text-xs text-red-600 font-bold uppercase tracking-wider">Factura Faltante</p>
+                 <div className="flex items-center gap-1 mb-1 text-xs text-gray-400">
+                   <span>Meta pagar:</span>
+                   <input
+                     type="text"
+                     value={formatNumberWithDots(maxPaymentLimit)}
+                     onChange={(e) => onMaxPaymentLimitChange(parseNumberFromDots(e.target.value))}
+                     className="w-24 bg-gray-100 border rounded px-1 text-gray-600 focus:outline-none focus:ring-1 focus:ring-red-300"
+                   />
+                 </div>
+                 <h3 className="text-2xl font-bold text-red-600">
+                   {formatCLP(facturaFaltanteNeto)}
+                 </h3>
+               </div>
+               <div className="p-2 bg-red-50 rounded-full shrink-0 ml-2">
+                 <FileWarning className="text-red-600 w-5 h-5" />
+               </div>
+             </div>
+           </div>
+
+           <Card
+             title="Total Recuperable"
+             amount={totalRecuperable}
+             icon={<PiggyBank className="text-teal-600" />}
+             color="border-l-4 border-teal-600"
+           />
+
+           <Card
+             title="IVA a Pagar"
+             amount={finalIvaToPay}
+             icon={<DollarSign className="text-red-500" />}
+             color="border-l-4 border-red-500"
+             isTax
+           />
+
+           <Card
+             title="TOTAL A PAGAR (c/Honorario)"
+             amount={totalToPayPocket}
+             icon={<Briefcase className="text-rose-600" />}
+             color="border-l-4 border-rose-600"
+             isTax
+           />
+         </div>
+       )}
     </div>
   );
 }

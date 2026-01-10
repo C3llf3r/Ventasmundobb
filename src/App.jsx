@@ -1,176 +1,220 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Moon, Sun, FileText } from 'lucide-react';
-import EntryForm from './components/EntryForm';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Settings, FileText, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import Dashboard from './components/Dashboard';
+import EntryForm from './components/EntryForm';
 import SalesList from './components/SalesList';
 import PdfReportModal from './components/PdfReportModal';
+import SettingsModal from './components/SettingsModal';
 import { salesService } from './services/salesService';
 
-function App() {
+export default function App() {
+  // State
   const [sales, setSales] = useState([]);
-  const [ivaRecuperable, setIvaRecuperable] = useState(0);
-  const [facturaFaltante, setFacturaFaltante] = useState(0);
-  const [maxPaymentLimit, setMaxPaymentLimit] = useState(500000);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [ivaRecuperable, setIvaRecuperable] = useState(0);
+  const [maxPaymentLimit, setMaxPaymentLimit] = useState(500000); 
   
-  // Estado para Modo Oscuro
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('theme') === 'dark';
+  // UI State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  
+  // App Settings (Local Storage)
+  const [appSettings, setAppSettings] = useState(() => {
+    const saved = localStorage.getItem('appSettings');
+    return saved ? JSON.parse(saved) : {
+      companyName: 'Mi Empresa',
+      appTitle: 'Sistema de Ventas',
+      visibleTotals: {
+        netSales: true,
+        totalIva: true,
+        totalPPM: true,
+        ivaPlusPPM: true,
+        totalRecuperable: true,
+        finalIvaToPay: true,
+        totalToPayPocket: true
+      }
+    };
   });
 
-  // Estado para Modal PDF
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  // Derived date values
+  const month = currentDate.getMonth() + 1;
+  const year = currentDate.getFullYear();
 
-  // Derive month and year from currentDate state for filtering
-  const selectedMonth = currentDate.getMonth() + 1; // 1-12
-  const selectedYear = currentDate.getFullYear();
-
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
-  }, [darkMode]);
-
-  const fetchSales = async () => {
+  // Load Data
+  const loadData = useCallback(async () => {
     try {
-      const data = await salesService.getSales(selectedMonth, selectedYear);
-      setSales(data || []);
-      const iva = await salesService.getIvaRecuperable(selectedMonth, selectedYear);
-      setIvaRecuperable(iva || 0);
-      const fact = await salesService.getFacturaFaltante(selectedMonth, selectedYear);
-      setFacturaFaltante(fact || 0);
+      const salesData = await salesService.getSales(month, year);
+      setSales(salesData);
+
+      const ivaRec = await salesService.getIvaRecuperable(month, year);
+      setIvaRecuperable(ivaRec);
+
+      const factFaltante = await salesService.getFacturaFaltante(month, year);
+      // If factFaltante is 0, we might want to keep the default or previous value,
+      // but usually 0 is a valid value for "no limit" or "0 limit". 
+      // However, if it's the first time, it might return 0. 
+      // Let's assume if it returns a value, we use it. If it returns undefined (which it shouldn't per service), we fallback.
+      if (factFaltante !== undefined) {
+          setMaxPaymentLimit(factFaltante || 500000); 
+      }
     } catch (error) {
-      console.error("Failed to fetch data:", error);
-      setSales([]);
+      console.error("Error loading data", error);
     }
-  };
+  }, [month, year]);
 
   useEffect(() => {
-    fetchSales();
-  }, [selectedMonth, selectedYear]);
+    const fetchData = async () => {
+      await loadData();
+    };
+    fetchData();
+  }, [loadData]);
 
-  const handleUpdateIvaRec = async (amount) => {
-    await salesService.setIvaRecuperable(selectedMonth, selectedYear, amount);
-    setIvaRecuperable(amount);
+  // Handlers
+  const handleMonthChange = (increment) => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev);
+      newDate.setMonth(newDate.getMonth() + increment);
+      return newDate;
+    });
   };
 
-  const handleUpdateFacturaFaltante = async (amount) => {
-    await salesService.setFacturaFaltante(selectedMonth, selectedYear, amount);
-    setFacturaFaltante(amount);
+  const handleSaveSettings = (newSettings) => {
+    setAppSettings(newSettings);
+    localStorage.setItem('appSettings', JSON.stringify(newSettings));
   };
 
-  const handleMonthChange = (e) => {
-    const [y, m] = e.target.value.split('-');
-    setCurrentDate(new Date(parseInt(y), parseInt(m) - 1, 1));
+  const handleIvaRecuperableChange = async (val) => {
+    setIvaRecuperable(val);
+    await salesService.setIvaRecuperable(month, year, val);
   };
 
-  // Pre-calcular datos para el reporte PDF (replicando lógica de Dashboard)
-  const safeSales = Array.isArray(sales) ? sales : [];
-  const totalCash = safeSales.reduce((acc, curr) => acc + (Number(curr.cash) || 0), 0);
-  const totalCard = safeSales.reduce((acc, curr) => acc + (Number(curr.card) || 0), 0);
-  const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
-  const totalSales = totalCash + totalCard + totalInvoice;
-  const netSales = Math.round(totalSales / 1.19);
-  const totalIvaCalculated = Math.round(netSales * 0.19);
-  const totalPPM = Math.round(netSales * 0.02);
-  const ivaPlusPPM = totalIvaCalculated + totalPPM;
-  
-  // Lógica Factura Faltante Automática
-  const realDebt = ivaPlusPPM - ivaRecuperable;
-  let finalIvaToPay = 0;
-  let facturaFaltanteNeto = 0;
-  if (realDebt > maxPaymentLimit) {
-    finalIvaToPay = maxPaymentLimit;
-    facturaFaltanteNeto = realDebt - maxPaymentLimit;
-  } else {
-    finalIvaToPay = realDebt;
-    facturaFaltanteNeto = 0;
-  }
-  const totalRecuperable = ivaRecuperable + facturaFaltanteNeto;
-  const honorario = 30000;
-  const totalToPayPocket = (finalIvaToPay > 0 ? finalIvaToPay : 0) + honorario;
-
-  const dashboardData = {
-    totalSales, netSales, totalIvaCalculated, totalPPM, ivaPlusPPM,
-    ivaRecuperable, facturaFaltanteNeto, totalRecuperable,
-    totalCash, totalCard, finalIvaToPay, totalToPayPocket
+  const handleMaxPaymentLimitChange = async (val) => {
+    setMaxPaymentLimit(val);
+    await salesService.setFacturaFaltante(month, year, val);
   };
+
+  // Calculations for PDF Report
+  const calculateDashboardData = () => {
+    const safeSales = Array.isArray(sales) ? sales : [];
+    const totalCash = safeSales.reduce((acc, curr) => acc + (Number(curr.cash) || 0), 0);
+    const totalCard = safeSales.reduce((acc, curr) => acc + (Number(curr.card) || 0), 0);
+    const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
+    const totalSales = totalCash + totalCard + totalInvoice;
+    
+    // Constants (could be moved to settings)
+    const taxRate = 0.19;
+    const ppmRate = 0.02;
+
+    const netSales = Math.round(totalSales / (1 + taxRate));
+    const totalIvaCalculated = Math.round(netSales * taxRate);
+    const totalPPM = Math.round(netSales * ppmRate);
+    const ivaPlusPPM = totalIvaCalculated + totalPPM;
+    
+    const realDebt = ivaPlusPPM - ivaRecuperable;
+    
+    let finalIvaToPay = 0;
+    let facturaFaltanteNeto = 0;
+    
+    // Logic: if debt > limit, pay limit, rest is "missing invoice"
+    if (realDebt > maxPaymentLimit) {
+      finalIvaToPay = maxPaymentLimit;
+      facturaFaltanteNeto = realDebt - maxPaymentLimit;
+    } else {
+      finalIvaToPay = realDebt;
+      facturaFaltanteNeto = 0;
+    }
+
+    const totalRecuperable = ivaRecuperable + facturaFaltanteNeto;
+    const honorario = 30000;
+    const totalToPayPocket = (finalIvaToPay > 0 ? finalIvaToPay : 0) + honorario;
+
+    return {
+      totalSales, netSales, totalIvaCalculated, totalPPM, ivaPlusPPM,
+      ivaRecuperable, facturaFaltanteNeto, totalRecuperable,
+      totalCash, totalCard, finalIvaToPay, totalToPayPocket
+    };
+  };
+
+  const dashboardData = calculateDashboardData();
+
+  const monthName = currentDate.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
 
   return (
-    <div className={`min-h-screen transition-colors duration-200 ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
+    <div className="min-h-screen bg-gray-100 text-gray-900 font-sans">
       {/* Header */}
-      <header className={`${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} shadow-sm sticky top-0 z-10 border-b`}>
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <h1 className={`text-2xl font-bold flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            📊 Control de Ventas
-          </h1>
-          
-          <div className="flex items-center gap-3">
-            {/* Selector de Fecha */}
-            <div className={`flex items-center gap-2 p-1.5 rounded-lg border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}>
-              <Calendar className={`w-5 h-5 ml-2 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`} />
-              <input
-                type="month"
-                value={`${selectedYear}-${String(selectedMonth).padStart(2, '0')}`}
-                onChange={handleMonthChange}
-                className={`bg-transparent border-none text-sm font-medium focus:ring-0 outline-none cursor-pointer ${darkMode ? 'text-white' : 'text-gray-700'}`}
-              />
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">{appSettings.companyName}</h1>
+              <p className="text-sm text-gray-500">{appSettings.appTitle}</p>
+            </div>
+            
+            <div className="flex items-center gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200">
+              <button onClick={() => handleMonthChange(-1)} className="p-2 hover:bg-white rounded-md transition-colors shadow-sm">
+                <ChevronLeft size={20} />
+              </button>
+              <span className="min-w-[150px] text-center font-medium capitalize flex items-center justify-center gap-2">
+                <Calendar size={18} className="text-blue-500" />
+                {monthName}
+              </span>
+              <button onClick={() => handleMonthChange(1)} className="p-2 hover:bg-white rounded-md transition-colors shadow-sm">
+                <ChevronRight size={20} />
+              </button>
             </div>
 
-            {/* Botón Reporte PDF */}
-            <button
-              onClick={() => setIsPdfModalOpen(true)}
-              className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-blue-400 hover:bg-gray-600' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'}`}
-              title="Generar Reporte PDF"
-            >
-              <FileText size={20} />
-            </button>
-
-            {/* Toggle Día/Noche */}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              title={darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+            <div className="flex gap-2">
+               <button 
+                onClick={() => setIsPdfModalOpen(true)}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                title="Reporte PDF"
+              >
+                <FileText size={24} />
+              </button>
+              <button 
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Configuración"
+              >
+                <Settings size={24} />
+              </button>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-        
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Dashboard 
-          sales={sales} 
-          taxRate={0.19} 
+          sales={sales}
+          taxRate={0.19}
           ivaRecuperable={ivaRecuperable}
-          onIvaRecChange={handleUpdateIvaRec}
+          onIvaRecChange={handleIvaRecuperableChange}
           maxPaymentLimit={maxPaymentLimit}
-          onMaxPaymentLimitChange={setMaxPaymentLimit}
+          onMaxPaymentLimitChange={handleMaxPaymentLimitChange}
         />
-
-        <EntryForm onSaleAdded={fetchSales} />
-
-        <SalesList sales={sales} onSalesUpdated={fetchSales} />
-
+        
+        <EntryForm onSaleAdded={loadData} />
+        
+        <SalesList sales={sales} onSalesUpdated={loadData} />
       </main>
 
-      {/* Modal PDF */}
-      <PdfReportModal 
+      {/* Modals */}
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)}
+        settings={appSettings}
+        onSaveSettings={handleSaveSettings}
+      />
+      
+      <PdfReportModal
         isOpen={isPdfModalOpen}
         onClose={() => setIsPdfModalOpen(false)}
-        month={selectedMonth}
-        year={selectedYear}
+        month={month}
+        year={year}
         dashboardData={dashboardData}
         sales={sales}
       />
     </div>
   );
 }
-
-export default App;
