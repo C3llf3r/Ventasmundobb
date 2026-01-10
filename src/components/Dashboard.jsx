@@ -33,7 +33,6 @@ export default function Dashboard({
   const isCurrentMonth = today.getMonth() + 1 === new Date(sales[0]?.date || Date.now()).getMonth() + 1; // Aproximación
 
   // Filtrar ventas del año pasado que coincidan con el día de hoy
-  // previousYearSales trae todo el mes del año pasado
   const sameDaySalesPrevYear = (previousYearSales || []).filter(sale => {
     // Asumiendo formato YYYY-MM-DD, el día son los últimos 2 caracteres
     const day = parseInt(sale.date.split('-')[2]);
@@ -41,6 +40,16 @@ export default function Dashboard({
   });
 
   const totalSameDayPrevYear = sameDaySalesPrevYear.reduce((acc, s) => 
+    acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
+  );
+
+  // Calcular Venta de HOY (Mes actual)
+  const salesToday = safeSales.filter(sale => {
+    const day = parseInt(sale.date.split('-')[2]);
+    return day === currentDay;
+  });
+
+  const totalSalesToday = salesToday.reduce((acc, s) => 
     acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
   );
 
@@ -82,24 +91,30 @@ export default function Dashboard({
   return (
     <div className="mb-6">
       {/* SECCIÓN PRINCIPAL: SIEMPRE VISIBLE */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-4">
         <Card 
-          title="Efectivo" 
+          title={`Venta Hoy (Día ${currentDay})`} 
+          amount={totalSalesToday} 
+          icon={<DollarSign className="text-blue-600 dark:text-blue-400" />} 
+          color="border-l-4 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+        />
+        <Card 
+          title="Efectivo (Mes)" 
           amount={totalCash} 
           icon={<Wallet className="text-green-500" />} 
           color="border-l-4 border-green-500"
         />
         <Card 
-          title="Tarjeta" 
+          title="Tarjeta (Mes)" 
           amount={totalCard} 
           icon={<CreditCard className="text-purple-500" />} 
           color="border-l-4 border-purple-500"
         />
         <Card 
-          title="Venta Total" 
+          title="Venta Total (Mes)" 
           amount={totalSales} 
-          icon={<TrendingUp className="text-blue-500" />} 
-          color="border-l-4 border-blue-500"
+          icon={<TrendingUp className="text-indigo-500" />} 
+          color="border-l-4 border-indigo-500"
         />
         <Card 
           title={`Año Pasado (Día ${currentDay})`} 
