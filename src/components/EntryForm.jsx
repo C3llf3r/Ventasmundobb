@@ -61,6 +61,7 @@ export default function EntryForm({ onSaleAdded }) {
             <input
               type="text"
               inputMode="numeric"
+              pattern="[0-9.]*"
               placeholder="0"
               value={formatNumberWithDots(cash)}
               onChange={handleInputChange(setCash)}
@@ -75,6 +76,7 @@ export default function EntryForm({ onSaleAdded }) {
             <input
               type="text"
               inputMode="numeric"
+              pattern="[0-9.]*"
               placeholder="0"
               value={formatNumberWithDots(card)}
               onChange={handleInputChange(setCard)}
@@ -89,6 +91,7 @@ export default function EntryForm({ onSaleAdded }) {
             <input
               type="text"
               inputMode="numeric"
+              pattern="[0-9.]*"
               placeholder="0"
               value={formatNumberWithDots(invoice)}
               onChange={handleInputChange(setInvoice)}
