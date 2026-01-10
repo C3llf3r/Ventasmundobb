@@ -181,7 +181,6 @@ export default function Dashboard({
                <input
                  type="text"
                  inputMode="numeric"
-                 pattern="[0-9.]*"
                  placeholder="0"
                  value={formatNumberWithDots(ivaRecuperable)}
                  onChange={(e) => onIvaRecChange(parseNumberFromDots(e.target.value))}
@@ -200,7 +199,6 @@ export default function Dashboard({
                    <input
                      type="text"
                      inputMode="numeric"
-                     pattern="[0-9.]*"
                      value={formatNumberWithDots(maxPaymentLimit)}
                      onChange={(e) => onMaxPaymentLimitChange(parseNumberFromDots(e.target.value))}
                      className="w-24 bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded px-1 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-red-300"

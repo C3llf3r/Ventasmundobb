@@ -109,7 +109,6 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                           <input
                             type="text"
                             inputMode="numeric"
-                            pattern="[0-9.]*"
                             name="cash"
                             value={formatNumberWithDots(editForm.cash)}
                             onChange={handleChange}
@@ -120,7 +119,6 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                           <input
                             type="text"
                             inputMode="numeric"
-                            pattern="[0-9.]*"
                             name="card"
                             value={formatNumberWithDots(editForm.card)}
                             onChange={handleChange}
@@ -131,7 +129,6 @@ export default function SalesList({ sales, onSalesUpdated, userRole }) {
                           <input
                             type="text"
                             inputMode="numeric"
-                            pattern="[0-9.]*"
                             name="invoice"
                             value={formatNumberWithDots(editForm.invoice)}
                             onChange={handleChange}
