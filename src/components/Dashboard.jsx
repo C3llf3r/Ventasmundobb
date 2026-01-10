@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { DollarSign, CreditCard, Wallet, TrendingUp, BarChart3, Calculator, Percent, Coins, Receipt, Briefcase, FileWarning, PiggyBank, ChevronDown, ChevronUp, PieChart } from 'lucide-react';
+import { DollarSign, CreditCard, Wallet, TrendingUp, BarChart3, Calculator, Percent, Coins, Receipt, Briefcase, FileWarning, PiggyBank, ChevronDown, ChevronUp, PieChart, Calendar } from 'lucide-react';
 import { formatCLP, formatNumberWithDots, parseNumberFromDots } from '../lib/utils';
 import MetricsSection from './MetricsSection';
 
@@ -25,6 +25,24 @@ export default function Dashboard({
   const totalCard = safeSales.reduce((acc, curr) => acc + (Number(curr.card) || 0), 0);
   const totalInvoice = safeSales.reduce((acc, curr) => acc + (Number(curr.invoice) || 0), 0);
   const totalSales = totalCash + totalCard + totalInvoice;
+
+  // Calcular venta del mismo día del año anterior
+  // Usamos new Date() para obtener el día "hoy" real, no el del mes navegado
+  const today = new Date();
+  const currentDay = today.getDate();
+  const isCurrentMonth = today.getMonth() + 1 === new Date(sales[0]?.date || Date.now()).getMonth() + 1; // Aproximación
+
+  // Filtrar ventas del año pasado que coincidan con el día de hoy
+  // previousYearSales trae todo el mes del año pasado
+  const sameDaySalesPrevYear = (previousYearSales || []).filter(sale => {
+    // Asumiendo formato YYYY-MM-DD, el día son los últimos 2 caracteres
+    const day = parseInt(sale.date.split('-')[2]);
+    return day === currentDay;
+  });
+
+  const totalSameDayPrevYear = sameDaySalesPrevYear.reduce((acc, s) => 
+    acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
+  );
 
   // Cálculos base
   const netSales = Math.round(totalSales / (1 + taxRate));
@@ -64,7 +82,7 @@ export default function Dashboard({
   return (
     <div className="mb-6">
       {/* SECCIÓN PRINCIPAL: SIEMPRE VISIBLE */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <Card 
           title="Efectivo" 
           amount={totalCash} 
@@ -82,6 +100,12 @@ export default function Dashboard({
           amount={totalSales} 
           icon={<TrendingUp className="text-blue-500" />} 
           color="border-l-4 border-blue-500"
+        />
+        <Card 
+          title={`Año Pasado (Día ${currentDay})`} 
+          amount={totalSameDayPrevYear} 
+          icon={<Calendar className="text-gray-500 dark:text-gray-300" />} 
+          color="border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50"
         />
       </div>
 
