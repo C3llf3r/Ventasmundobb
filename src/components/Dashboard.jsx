@@ -5,14 +5,16 @@ import MetricsSection from './MetricsSection';
 
 export default function Dashboard({
   sales,
+  previousYearSales, // Nueva prop
   taxRate = 0.19,
   ivaRecuperable = 0,
   onIvaRecChange,
   maxPaymentLimit = 500000,
   onMaxPaymentLimitChange,
   visibleTotals,
-  showDetails, // Nueva prop
-  showMetrics  // Nueva prop
+  showDetails,
+  showMetrics,
+  userRole
 }) {
   const safeSales = Array.isArray(sales) ? sales : [];
   
@@ -86,7 +88,7 @@ export default function Dashboard({
       {/* SECCIÓN MÉTRICAS: OCULTA POR DEFECTO */}
       {showMetrics && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-300">
-          <MetricsSection sales={safeSales} />
+          <MetricsSection sales={safeSales} previousYearSales={previousYearSales} />
         </div>
       )}
 

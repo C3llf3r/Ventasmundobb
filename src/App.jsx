@@ -18,6 +18,7 @@ export default function App() {
 
   // App Data State
   const [sales, setSales] = useState([]);
+  const [previousYearSales, setPreviousYearSales] = useState([]); // Nuevo estado para año anterior
   const [currentDate, setCurrentDate] = useState(new Date());
   const [ivaRecuperable, setIvaRecuperable] = useState(0);
   const [maxPaymentLimit, setMaxPaymentLimit] = useState(500000); 
@@ -98,6 +99,10 @@ export default function App() {
     try {
       const salesData = await salesService.getSales(month, year);
       setSales(salesData);
+
+      // Cargar ventas del mismo mes pero año anterior
+      const prevYearSalesData = await salesService.getSales(month, year - 1);
+      setPreviousYearSales(prevYearSalesData);
 
       const ivaRec = await salesService.getIvaRecuperable(month, year);
       setIvaRecuperable(ivaRec);
@@ -295,6 +300,7 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Dashboard 
           sales={sales}
+          previousYearSales={previousYearSales} // Nueva prop
           taxRate={0.19}
           ivaRecuperable={ivaRecuperable}
           onIvaRecChange={handleIvaRecuperableChange}
