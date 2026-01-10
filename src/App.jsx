@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User, Moon, Sun } from 'lucide-react';
+import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User, Moon, Sun, ChevronUp, ChevronDown, PieChart, PlusCircle } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import Dashboard from './components/Dashboard';
@@ -25,7 +25,9 @@ export default function App() {
   // UI State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [showEntryForm, setShowEntryForm] = useState(true); // Estado para colapsar formulario
+  const [showEntryForm, setShowEntryForm] = useState(true);
+  const [showDetails, setShowDetails] = useState(false); // Estado para Impuestos
+  const [showMetrics, setShowMetrics] = useState(false); // Estado para Gráficos
   
   // Theme State
   const [darkMode, setDarkMode] = useState(() => {
@@ -293,20 +295,60 @@ export default function App() {
           onIvaRecChange={handleIvaRecuperableChange}
           maxPaymentLimit={maxPaymentLimit}
           onMaxPaymentLimitChange={handleMaxPaymentLimitChange}
-          visibleTotals={appSettings.visibleTotals} // Pasamos la config de visibilidad
+          visibleTotals={appSettings.visibleTotals}
+          showDetails={showDetails}
+          showMetrics={showMetrics}
         />
         
-        <div className="mb-4 flex justify-end">
-           <button
-             onClick={() => setShowEntryForm(!showEntryForm)}
-             className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-           >
-             {showEntryForm ? (
-               <>Ocultar Ingreso <ChevronLeft className="rotate-90 w-4 h-4" /></>
-             ) : (
-               <>Mostrar Ingreso <ChevronRight className="rotate-90 w-4 h-4" /></>
-             )}
-           </button>
+        {/* BOTONES DE CONTROL (FILA UNIFICADA) */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {/* BOTÓN INGRESO DIARIO */}
+          <button 
+            onClick={() => setShowEntryForm(!showEntryForm)}
+            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+          >
+            {showEntryForm ? (
+              <>
+                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Ingreso
+              </>
+            ) : (
+              <>
+                <PlusCircle className="w-5 h-5 mr-2" /> Ingresar Venta
+              </>
+            )}
+          </button>
+
+          {/* BOTÓN IMPUESTOS */}
+          <button 
+            onClick={() => setShowDetails(!showDetails)}
+            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+          >
+            {showDetails ? (
+              <>
+                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Detalles
+              </>
+            ) : (
+              <>
+                <ChevronDown className="w-5 h-5 mr-2" /> Ver Impuestos
+              </>
+            )}
+          </button>
+
+          {/* BOTÓN GRÁFICOS */}
+          <button 
+            onClick={() => setShowMetrics(!showMetrics)}
+            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+          >
+            {showMetrics ? (
+              <>
+                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Gráficos
+              </>
+            ) : (
+              <>
+                <PieChart className="w-5 h-5 mr-2" /> Ver Gráficos
+              </>
+            )}
+          </button>
         </div>
 
         {showEntryForm && (

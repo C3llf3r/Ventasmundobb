@@ -10,11 +10,10 @@ export default function Dashboard({
   onIvaRecChange,
   maxPaymentLimit = 500000,
   onMaxPaymentLimitChange,
-  visibleTotals // Nueva prop
+  visibleTotals,
+  showDetails, // Nueva prop
+  showMetrics  // Nueva prop
 }) {
-  const [showDetails, setShowDetails] = useState(false);
-  const [showMetrics, setShowMetrics] = useState(false);
-
   const safeSales = Array.isArray(sales) ? sales : [];
   
   // Default visibility if undefined (to prevent crash on first load)
@@ -82,40 +81,6 @@ export default function Dashboard({
           icon={<TrendingUp className="text-blue-500" />} 
           color="border-l-4 border-blue-500"
         />
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        {/* BOTÓN DESPLEGABLE IMPUESTOS */}
-        <button 
-          onClick={() => setShowDetails(!showDetails)}
-          className="flex-1 flex items-center justify-center py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors"
-        >
-          {showDetails ? (
-            <>
-              <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Detalles
-            </>
-          ) : (
-            <>
-              <ChevronDown className="w-5 h-5 mr-2" /> Ver Impuestos
-            </>
-          )}
-        </button>
-
-        {/* BOTÓN DESPLEGABLE GRÁFICOS */}
-        <button 
-          onClick={() => setShowMetrics(!showMetrics)}
-          className="flex-1 flex items-center justify-center py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors"
-        >
-          {showMetrics ? (
-            <>
-              <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Gráficos
-            </>
-          ) : (
-            <>
-              <PieChart className="w-5 h-5 mr-2" /> Ver Gráficos
-            </>
-          )}
-        </button>
       </div>
 
       {/* SECCIÓN MÉTRICAS: OCULTA POR DEFECTO */}
