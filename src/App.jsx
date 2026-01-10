@@ -13,40 +13,25 @@ import { salesService } from './services/salesService';
 export default function App() {
   // Auth State
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
   // App Data State
-  const [sales, setSales] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [ivaRecuperable, setIvaRecuperable] = useState(0);
-  const [maxPaymentLimit, setMaxPaymentLimit] = useState(500000); 
-  
-  // UI State
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  
-  // App Settings (Local Storage)
-  const [appSettings, setAppSettings] = useState(() => {
-    const saved = localStorage.getItem('appSettings');
-    return saved ? JSON.parse(saved) : {
-      companyName: 'Mi Empresa',
-      appTitle: 'Sistema de Ventas',
-      visibleTotals: {
-        netSales: true,
-        totalIva: true,
-        totalPPM: true,
-        ivaPlusPPM: true,
-        totalRecuperable: true,
-        finalIvaToPay: true,
-        totalToPayPocket: true
-      }
-    };
-  });
+  // ... (rest of the states)
 
   // Auth Listener
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        // Sincronizar y obtener perfil
+        await salesService.syncUserProfile(currentUser);
+        const profile = await salesService.getUserProfile(currentUser.uid);
+        setUserProfile(profile);
+        setUser(currentUser);
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
       setAuthLoading(false);
     });
     return () => unsubscribe();
@@ -189,6 +174,11 @@ export default function App() {
               <div className="flex items-center gap-2 text-sm text-gray-500">
                  <User size={14} />
                  <span>{user.email}</span>
+                 {userProfile?.role === 'superadmin' && (
+                   <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border border-amber-200">
+                     Super Admin
+                   </span>
+                 )}
               </div>
             </div>
             

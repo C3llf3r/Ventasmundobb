@@ -13,9 +13,48 @@ import {
 
 const SALES_COLLECTION = 'sales';
 const SETTINGS_COLLECTION = 'monthly_settings';
+const USERS_COLLECTION = 'users';
 
 export const salesService = {
-  // Agregar una venta
+  // --- Gestión de Usuarios ---
+  getUserProfile: async (uid) => {
+    try {
+      const docRef = doc(db, USERS_COLLECTION, uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return docSnap.data();
+      }
+      return null;
+    } catch (error) {
+      console.error("Error getting user profile:", error);
+      return null;
+    }
+  },
+
+  // Función para crear/actualizar perfil de usuario
+  syncUserProfile: async (user) => {
+    try {
+      const docRef = doc(db, USERS_COLLECTION, user.uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (!docSnap.exists()) {
+        // Si el usuario es nuevo, lo creamos con rol 'user' por defecto
+        await setDoc(docRef, {
+          email: user.email,
+          role: 'user', // Por defecto no es admin
+          lastLogin: new Date().getTime()
+        });
+      } else {
+        await updateDoc(docRef, {
+          lastLogin: new Date().getTime()
+        });
+      }
+    } catch (error) {
+      console.error("Error syncing user profile:", error);
+    }
+  },
+
+  // --- Ventas ---
   addSale: async (date, cash, card, invoice) => {
     try {
       const docRef = await addDoc(collection(db, SALES_COLLECTION), {
