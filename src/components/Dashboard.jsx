@@ -99,6 +99,12 @@ export default function Dashboard({
           color="border-l-4 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20"
         />
         <Card 
+          title={`Año Pasado (Día ${currentDay})`} 
+          amount={totalSameDayPrevYear} 
+          icon={<Calendar className="text-amber-600 dark:text-amber-400" />} 
+          color="border-l-4 border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
+        />
+        <Card 
           title="Efectivo (Mes)" 
           amount={totalCash} 
           icon={<Wallet className="text-green-500" />} 
@@ -115,12 +121,6 @@ export default function Dashboard({
           amount={totalSales} 
           icon={<TrendingUp className="text-indigo-500" />} 
           color="border-l-4 border-indigo-500"
-        />
-        <Card 
-          title={`Año Pasado (Día ${currentDay})`} 
-          amount={totalSameDayPrevYear} 
-          icon={<Calendar className="text-gray-500 dark:text-gray-300" />} 
-          color="border-l-4 border-gray-400 dark:border-gray-500 bg-gray-50 dark:bg-gray-800/50"
         />
       </div>
 
