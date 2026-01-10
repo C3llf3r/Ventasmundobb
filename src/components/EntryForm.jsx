@@ -43,7 +43,7 @@ export default function EntryForm({ onSaleAdded }) {
         <PlusCircle className="w-6 h-6 text-blue-500" />
         Ingreso Diario
       </h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end" noValidate>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fecha</label>
           <input
