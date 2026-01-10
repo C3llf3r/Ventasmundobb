@@ -370,6 +370,7 @@ export default function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={appSettings}
         onSaveSettings={handleSaveSettings}
+        currentUserRole={userProfile?.role}
       />
       
       <PdfReportModal

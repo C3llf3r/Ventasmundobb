@@ -55,7 +55,32 @@ export const salesService = {
     }
   },
 
-  // --- Configuración Global (Empresa y Visibilidad) ---
+  getAllUsers: async () => {
+    try {
+      const q = query(collection(db, USERS_COLLECTION));
+      const querySnapshot = await getDocs(q);
+      const users = [];
+      querySnapshot.forEach((doc) => {
+        users.push({ id: doc.id, ...doc.data() });
+      });
+      return users;
+    } catch (error) {
+      console.error("Error getting users:", error);
+      return [];
+    }
+  },
+
+  updateUserRole: async (uid, newRole) => {
+    try {
+      const docRef = doc(db, USERS_COLLECTION, uid);
+      await updateDoc(docRef, { role: newRole });
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      throw error;
+    }
+  },
+
+  // --- Ventas ---
   getGlobalSettings: async () => {
     try {
       const docRef = doc(db, SETTINGS_COLLECTION, 'global_config');
