@@ -32,48 +32,54 @@ export default function Dashboard({
   const currentDay = today.getDate();
   const isCurrentMonth = today.getMonth() + 1 === new Date(sales[0]?.date || Date.now()).getMonth() + 1; // Aproximación
 
-  // Filtrar ventas del año pasado usando lógica de "Día Equivalente" (Ej: 2do Sábado vs 2do Sábado)
+  // Filtrar ventas del año pasado usando lógica de "Día Equivalente"
   const getEquivalentDateLastYear = (date) => {
     const currentYear = date.getFullYear();
     const lastYear = currentYear - 1;
     const month = date.getMonth();
-    const dayOfWeek = date.getDay(); // 0-6
+    const dayOfWeek = date.getDay(); // 0-6 (0=Dom, 6=Sab)
     
-    // 1. Calcular ocurrencia actual (¿Qué número de sábado es hoy?)
+    // 1. Calcular ocurrencia actual (¿Qué número de X-día es hoy?)
     let occurrence = 0;
     for (let d = 1; d <= date.getDate(); d++) {
-      if (new Date(currentYear, month, d).getDay() === dayOfWeek) {
+      // Creamos fecha en mediodía local para evitar líos de zona horaria
+      const tempDate = new Date(currentYear, month, d, 12, 0, 0);
+      if (tempDate.getDay() === dayOfWeek) {
         occurrence++;
       }
     }
 
     // 2. Buscar esa misma ocurrencia en el año pasado
     let count = 0;
-    let targetDate = null;
     for (let d = 1; d <= 31; d++) {
-      const testDate = new Date(lastYear, month, d);
+      const testDate = new Date(lastYear, month, d, 12, 0, 0);
       if (testDate.getMonth() !== month) break;
 
       if (testDate.getDay() === dayOfWeek) {
         count++;
         if (count === occurrence) {
-          targetDate = testDate;
-          break;
+          return testDate;
         }
       }
     }
-    return targetDate;
+    return null;
   };
 
   const targetDateLastYear = getEquivalentDateLastYear(today);
   
+  // Nombres de días para el label
+  const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const currentDayName = dayNames[today.getDay()];
+
   const sameDaySalesPrevYear = (previousYearSales || []).filter(sale => {
     if (!targetDateLastYear) return false;
     
-    // Comparar fecha exacta YYYY-MM-DD
-    // El objeto sale.date viene como string UTC "2025-01-XX", targetDate es objeto local
-    // Convertimos targetDate a string formato YYYY-MM-DD local para comparar
-    const targetString = targetDateLastYear.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    // Formato ISO local YYYY-MM-DD
+    const y = targetDateLastYear.getFullYear();
+    const m = String(targetDateLastYear.getMonth() + 1).padStart(2, '0');
+    const d = String(targetDateLastYear.getDate()).padStart(2, '0');
+    const targetString = `${y}-${m}-${d}`;
+    
     return sale.date === targetString;
   });
 
@@ -81,9 +87,8 @@ export default function Dashboard({
     acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
   );
 
-  // Texto para la tarjeta (Ej: "Año Pasado (Día 11 - Sáb)")
   const labelLastYear = targetDateLastYear 
-    ? `Año Pasado (Día ${targetDateLastYear.getDate()})` 
+    ? `Año Pasado (${dayNames[targetDateLastYear.getDay()]} ${targetDateLastYear.getDate()})` 
     : `Año Pasado (N/A)`;
 
   // Calcular Venta de HOY (Mes actual)
