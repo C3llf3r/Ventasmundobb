@@ -151,7 +151,13 @@ export default function Dashboard({
           amount={totalSameDayPrevYear} 
           icon={<Calendar className="text-amber-600 dark:text-amber-400" />} 
           color="border-l-4 border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
-        />
+        >
+           {/* DEBUG INFO - BORRAR LUEGO */}
+           <div className="text-[10px] text-gray-400 mt-1">
+             Meta: {targetDateLastYear ? `${targetDateLastYear.getFullYear()}-${String(targetDateLastYear.getMonth()+1).padStart(2,'0')}-${String(targetDateLastYear.getDate()).padStart(2,'0')}` : 'N/A'} 
+             ({sameDaySalesPrevYear.length} regs)
+           </div>
+        </Card>
         <Card 
           title="Efectivo (Mes)" 
           amount={totalCash} 
@@ -296,7 +302,7 @@ export default function Dashboard({
   );
 }
 
-function Card({ title, amount, icon, color, isTax }) {
+function Card({ title, amount, icon, color, isTax, children }) {
   const amountColor = isTax ? (amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') : 'text-gray-900 dark:text-white';
 
   return (
@@ -307,6 +313,7 @@ function Card({ title, amount, icon, color, isTax }) {
           <h3 className={`text-2xl font-bold mt-1 ${amountColor}`}>
             {formatCLP(amount)}
           </h3>
+          {children}
         </div>
         <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-full">
           {icon}
