@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
+import { Settings, FileText, Calendar, ChevronLeft, ChevronRight, LogOut, User, Moon, Sun } from 'lucide-react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import Dashboard from './components/Dashboard';
@@ -17,7 +17,49 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
 
   // App Data State
-  // ... (rest of the states)
+  const [sales, setSales] = useState([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [ivaRecuperable, setIvaRecuperable] = useState(0);
+  const [maxPaymentLimit, setMaxPaymentLimit] = useState(500000); 
+  
+  // UI State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  
+  // Theme State
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  // App Settings (Local Storage)
+  const [appSettings, setAppSettings] = useState(() => {
+    const saved = localStorage.getItem('appSettings');
+    return saved ? JSON.parse(saved) : {
+      companyName: 'Mi Empresa',
+      appTitle: 'Sistema de Ventas',
+      visibleTotals: {
+        netSales: true,
+        totalIva: true,
+        totalPPM: true,
+        ivaPlusPPM: true,
+        totalRecuperable: true,
+        finalIvaToPay: true,
+        totalToPayPocket: true
+      }
+    };
+  });
+
+  // Theme Effect
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [darkMode]);
 
   // Auth Listener
   useEffect(() => {
@@ -75,6 +117,10 @@ export default function App() {
       newDate.setMonth(newDate.getMonth() + increment);
       return newDate;
     });
+  };
+
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
   };
 
   const handleSaveSettings = (newSettings) => {
@@ -147,10 +193,10 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-500 font-medium">Cargando sistema...</p>
+          <p className="text-gray-500 dark:text-gray-400 font-medium">Cargando sistema...</p>
         </div>
       </div>
     );
@@ -164,56 +210,64 @@ export default function App() {
   const monthName = currentDate.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900 font-sans">
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-300">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">{appSettings.companyName}</h1>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{appSettings.companyName}</h1>
+              <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                  <User size={14} />
                  <span>{user.email}</span>
                  {userProfile?.role === 'superadmin' && (
-                   <span className="bg-amber-100 text-amber-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border border-amber-200">
+                   <span className="bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase border border-amber-200 dark:border-amber-700">
                      Super Admin
                    </span>
                  )}
               </div>
             </div>
             
-            <div className="flex items-center gap-4 bg-gray-50 p-1 rounded-lg border border-gray-200">
-              <button onClick={() => handleMonthChange(-1)} className="p-2 hover:bg-white rounded-md transition-colors shadow-sm">
+            <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-700 p-1 rounded-lg border border-gray-200 dark:border-gray-600">
+              <button onClick={() => handleMonthChange(-1)} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-colors shadow-sm text-gray-700 dark:text-gray-200">
                 <ChevronLeft size={20} />
               </button>
-              <span className="min-w-[150px] text-center font-medium capitalize flex items-center justify-center gap-2">
-                <Calendar size={18} className="text-blue-500" />
+              <span className="min-w-[150px] text-center font-medium capitalize flex items-center justify-center gap-2 text-gray-900 dark:text-white">
+                <Calendar size={18} className="text-blue-500 dark:text-blue-400" />
                 {monthName}
               </span>
-              <button onClick={() => handleMonthChange(1)} className="p-2 hover:bg-white rounded-md transition-colors shadow-sm">
+              <button onClick={() => handleMonthChange(1)} className="p-2 hover:bg-white dark:hover:bg-gray-600 rounded-md transition-colors shadow-sm text-gray-700 dark:text-gray-200">
                 <ChevronRight size={20} />
               </button>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title={darkMode ? "Cambiar a Modo Claro" : "Cambiar a Modo Oscuro"}
+              >
+                {darkMode ? <Sun size={24} className="text-yellow-400" /> : <Moon size={24} />}
+              </button>
+               <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-1"></div>
                <button 
                 onClick={() => setIsPdfModalOpen(true)}
-                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                 title="Reporte PDF"
               >
                 <FileText size={24} />
               </button>
               <button 
                 onClick={() => setIsSettingsOpen(true)}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Configuración"
               >
                 <Settings size={24} />
               </button>
-              <div className="w-px h-8 bg-gray-300 mx-1"></div>
+              <div className="w-px h-8 bg-gray-300 dark:bg-gray-600 mx-1"></div>
               <button
                 onClick={handleLogout}
-                className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-2 text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 title="Cerrar Sesión"
               >
                 <LogOut size={24} />
@@ -236,7 +290,11 @@ export default function App() {
         
         <EntryForm onSaleAdded={loadData} />
         
-        <SalesList sales={sales} onSalesUpdated={loadData} />
+        <SalesList 
+          sales={sales} 
+          onSalesUpdated={loadData} 
+          userRole={userProfile?.role}
+        />
       </main>
 
       {/* Modals */}

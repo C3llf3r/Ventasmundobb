@@ -84,7 +84,7 @@ export default function Dashboard({
         {/* BOTÓN DESPLEGABLE IMPUESTOS */}
         <button 
           onClick={() => setShowDetails(!showDetails)}
-          className="flex-1 flex items-center justify-center py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-600 font-medium transition-colors"
+          className="flex-1 flex items-center justify-center py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors"
         >
           {showDetails ? (
             <>
@@ -100,7 +100,7 @@ export default function Dashboard({
         {/* BOTÓN DESPLEGABLE GRÁFICOS */}
         <button 
           onClick={() => setShowMetrics(!showMetrics)}
-          className="flex-1 flex items-center justify-center py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-gray-600 font-medium transition-colors"
+          className="flex-1 flex items-center justify-center py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors"
         >
           {showMetrics ? (
             <>
@@ -151,45 +151,45 @@ export default function Dashboard({
            />
 
            {/* Tarjeta Manual: Iva Recuperable con separador de miles - Siempre visible */}
-           <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-cyan-500">
+           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-cyan-500 transition-colors duration-300">
              <div className="flex justify-between items-start mb-2">
-               <p className="text-sm text-gray-500 font-medium">Iva Recuperable</p>
-               <div className="p-2 bg-gray-50 rounded-full">
+               <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Iva Recuperable</p>
+               <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-full">
                  <Receipt className="text-cyan-500 w-5 h-5" />
                </div>
              </div>
-             <div className="flex items-center bg-gray-50 border border-gray-200 rounded px-2 focus-within:ring-2 focus-within:ring-cyan-500">
-               <span className="text-cyan-700 font-bold">$</span>
+             <div className="flex items-center bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded px-2 focus-within:ring-2 focus-within:ring-cyan-500 transition-colors">
+               <span className="text-cyan-700 dark:text-cyan-400 font-bold">$</span>
                <input
                  type="text"
                  placeholder="0"
                  value={formatNumberWithDots(ivaRecuperable)}
                  onChange={(e) => onIvaRecChange(parseNumberFromDots(e.target.value))}
-                 className="w-full text-xl font-bold bg-transparent p-1 outline-none text-cyan-700 ml-1"
+                 className="w-full text-xl font-bold bg-transparent p-1 outline-none text-cyan-700 dark:text-cyan-400 ml-1"
                />
              </div>
            </div>
 
            {/* Tarjeta Automática: Factura Faltante - Siempre visible */}
-           <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-red-600">
+           <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-red-600 transition-colors duration-300">
              <div className="flex justify-between items-start">
                <div className="w-full">
-                 <p className="text-xs text-red-600 font-bold uppercase tracking-wider">Factura Faltante</p>
+                 <p className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Factura Faltante</p>
                  <div className="flex items-center gap-1 mb-1 text-xs text-gray-400">
                    <span>Meta pagar:</span>
                    <input
                      type="text"
                      value={formatNumberWithDots(maxPaymentLimit)}
                      onChange={(e) => onMaxPaymentLimitChange(parseNumberFromDots(e.target.value))}
-                     className="w-24 bg-gray-100 border rounded px-1 text-gray-600 focus:outline-none focus:ring-1 focus:ring-red-300"
+                     className="w-24 bg-gray-100 dark:bg-gray-700 border dark:border-gray-600 rounded px-1 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-red-300"
                    />
                  </div>
-                 <h3 className="text-2xl font-bold text-red-600">
+                 <h3 className="text-2xl font-bold text-red-600 dark:text-red-400">
                    {formatCLP(facturaFaltanteNeto)}
                  </h3>
                </div>
-               <div className="p-2 bg-red-50 rounded-full shrink-0 ml-2">
-                 <FileWarning className="text-red-600 w-5 h-5" />
+               <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-full shrink-0 ml-2">
+                 <FileWarning className="text-red-600 dark:text-red-400 w-5 h-5" />
                </div>
              </div>
            </div>
@@ -197,14 +197,14 @@ export default function Dashboard({
            <Card
              title="Total Recuperable"
              amount={totalRecuperable}
-             icon={<PiggyBank className="text-teal-600" />}
+             icon={<PiggyBank className="text-teal-600 dark:text-teal-400" />}
              color="border-l-4 border-teal-600"
            />
 
            <Card
              title="IVA a Pagar"
              amount={finalIvaToPay}
-             icon={<DollarSign className="text-red-500" />}
+             icon={<DollarSign className="text-red-500 dark:text-red-400" />}
              color="border-l-4 border-red-500"
              isTax
            />
@@ -212,7 +212,7 @@ export default function Dashboard({
            <Card
              title="TOTAL A PAGAR (c/Honorario)"
              amount={totalToPayPocket}
-             icon={<Briefcase className="text-rose-600" />}
+             icon={<Briefcase className="text-rose-600 dark:text-rose-400" />}
              color="border-l-4 border-rose-600"
              isTax
            />
@@ -223,18 +223,18 @@ export default function Dashboard({
 }
 
 function Card({ title, amount, icon, color, isTax }) {
-  const amountColor = isTax ? (amount > 0 ? 'text-red-600' : 'text-green-600') : 'text-gray-900';
+  const amountColor = isTax ? (amount > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400') : 'text-gray-900 dark:text-white';
 
   return (
-    <div className={`bg-white p-4 rounded-lg shadow-sm ${color}`}>
+    <div className={`bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm ${color} transition-colors duration-300`}>
       <div className="flex justify-between items-start">
         <div>
-          <p className="text-sm text-gray-500 font-medium">{title}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">{title}</p>
           <h3 className={`text-2xl font-bold mt-1 ${amountColor}`}>
             {formatCLP(amount)}
           </h3>
         </div>
-        <div className="p-2 bg-gray-50 rounded-full">
+        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded-full">
           {icon}
         </div>
       </div>

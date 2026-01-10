@@ -6,6 +6,7 @@ import {
    query,
    doc,
    updateDoc,
+   deleteDoc,
    setDoc,
    getDoc,
    orderBy
@@ -107,6 +108,17 @@ export const salesService = {
       });
     } catch (error) {
       console.error("Error updating document: ", error);
+      throw error;
+    }
+  },
+
+  // Eliminar una venta
+  deleteSale: async (id) => {
+    try {
+      const docRef = doc(db, SALES_COLLECTION, id);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error("Error deleting document: ", error);
       throw error;
     }
   },
