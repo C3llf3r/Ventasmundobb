@@ -32,16 +32,59 @@ export default function Dashboard({
   const currentDay = today.getDate();
   const isCurrentMonth = today.getMonth() + 1 === new Date(sales[0]?.date || Date.now()).getMonth() + 1; // Aproximación
 
-  // Filtrar ventas del año pasado que coincidan con el día de hoy
+  // Filtrar ventas del año pasado usando lógica de "Día Equivalente" (Ej: 2do Sábado vs 2do Sábado)
+  const getEquivalentDateLastYear = (date) => {
+    const currentYear = date.getFullYear();
+    const lastYear = currentYear - 1;
+    const month = date.getMonth();
+    const dayOfWeek = date.getDay(); // 0-6
+    
+    // 1. Calcular ocurrencia actual (¿Qué número de sábado es hoy?)
+    let occurrence = 0;
+    for (let d = 1; d <= date.getDate(); d++) {
+      if (new Date(currentYear, month, d).getDay() === dayOfWeek) {
+        occurrence++;
+      }
+    }
+
+    // 2. Buscar esa misma ocurrencia en el año pasado
+    let count = 0;
+    let targetDate = null;
+    for (let d = 1; d <= 31; d++) {
+      const testDate = new Date(lastYear, month, d);
+      if (testDate.getMonth() !== month) break;
+
+      if (testDate.getDay() === dayOfWeek) {
+        count++;
+        if (count === occurrence) {
+          targetDate = testDate;
+          break;
+        }
+      }
+    }
+    return targetDate;
+  };
+
+  const targetDateLastYear = getEquivalentDateLastYear(today);
+  
   const sameDaySalesPrevYear = (previousYearSales || []).filter(sale => {
-    // Asumiendo formato YYYY-MM-DD, el día son los últimos 2 caracteres
-    const day = parseInt(sale.date.split('-')[2]);
-    return day === currentDay;
+    if (!targetDateLastYear) return false;
+    
+    // Comparar fecha exacta YYYY-MM-DD
+    // El objeto sale.date viene como string UTC "2025-01-XX", targetDate es objeto local
+    // Convertimos targetDate a string formato YYYY-MM-DD local para comparar
+    const targetString = targetDateLastYear.toLocaleDateString('en-CA'); // YYYY-MM-DD
+    return sale.date === targetString;
   });
 
   const totalSameDayPrevYear = sameDaySalesPrevYear.reduce((acc, s) => 
     acc + (Number(s.cash) || 0) + (Number(s.card) || 0) + (Number(s.invoice) || 0), 0
   );
+
+  // Texto para la tarjeta (Ej: "Año Pasado (Día 11 - Sáb)")
+  const labelLastYear = targetDateLastYear 
+    ? `Año Pasado (Día ${targetDateLastYear.getDate()})` 
+    : `Año Pasado (N/A)`;
 
   // Calcular Venta de HOY (Mes actual)
   const salesToday = safeSales.filter(sale => {
@@ -99,7 +142,7 @@ export default function Dashboard({
           color="border-l-4 border-blue-600 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20"
         />
         <Card 
-          title={`Año Pasado (Día ${currentDay})`} 
+          title={labelLastYear} 
           amount={totalSameDayPrevYear} 
           icon={<Calendar className="text-amber-600 dark:text-amber-400" />} 
           color="border-l-4 border-amber-500 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20"
