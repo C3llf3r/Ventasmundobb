@@ -315,22 +315,6 @@ export default function App() {
         
         {/* BOTONES DE CONTROL (FILA UNIFICADA) */}
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          {/* BOTÓN INGRESO DIARIO */}
-          <button 
-            onClick={() => setShowEntryForm(!showEntryForm)}
-            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
-          >
-            {showEntryForm ? (
-              <>
-                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Ingreso
-              </>
-            ) : (
-              <>
-                <PlusCircle className="w-5 h-5 mr-2" /> Ingresar Venta
-              </>
-            )}
-          </button>
-
           {/* BOTÓN IMPUESTOS - Solo Admin/SuperAdmin */}
           {(userProfile?.role === 'admin' || userProfile?.role === 'superadmin') && (
             <button 
@@ -361,6 +345,22 @@ export default function App() {
             ) : (
               <>
                 <PieChart className="w-5 h-5 mr-2" /> Ver Gráficos
+              </>
+            )}
+          </button>
+
+          {/* BOTÓN INGRESO DIARIO */}
+          <button 
+            onClick={() => setShowEntryForm(!showEntryForm)}
+            className="flex-1 flex items-center justify-center py-2 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 font-medium transition-colors shadow-sm"
+          >
+            {showEntryForm ? (
+              <>
+                <ChevronUp className="w-5 h-5 mr-2" /> Ocultar Ingreso
+              </>
+            ) : (
+              <>
+                <PlusCircle className="w-5 h-5 mr-2" /> Ingresar Venta
               </>
             )}
           </button>
